@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🎲 AI 로또 예측기</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js">
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(145deg, #0b0e1a, #1a1f2f);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 720px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            border-radius: 40px;
+            padding: 32px 28px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #fff;
+            text-align: center;
+            letter-spacing: -0.5px;
+            margin-bottom: 6px;
+        }
+        .sub {
+            text-align: center;
+            color: #8b95b0;
+            font-size: 14px;
+            margin-bottom: 28px;
+            font-weight: 300;
+        }
+        .input-group {
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 60px;
+            padding: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            margin-bottom: 24px;
+        }
+        .input-group input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 14px 20px;
+            font-size: 16px;
+            color: #fff;
+            outline: none;
+        }
+        .input-group input::placeholder {
+            color: #5a6680;
+            font-weight: 300;
+        }
+        .input-group button {
+            background: #f7b731;
+            border: none;
+            color: #0b0e1a;
+            font-weight: 700;
+            padding: 12px 28px;
+            border-radius: 40px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: 0.2s;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+        }
+        .input-group button:hover {
+            background: #ffd166;
+            transform: scale(1.02);
+        }
+        .info-box {
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 16px;
+            padding: 14px 18px;
+            margin-bottom: 24px;
+            border-left: 4px solid #f7b731;
+            color: #bcc7e0;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .info-box strong {
+            color: #fff;
+        }
+        .result-area {
+            margin-top: 8px;
+        }
+        .result-item {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 14px 20px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            transition: 0.15s;
+        }
+        .result-item:hover {
+            background: rgba(255, 255, 255, 0.07);
+        }
+        .result-label {
+            font-weight: 700;
+            color: #f7b731;
+            font-size: 18px;
+            min-width: 28px;
+        }
+        .result-numbers {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .ball {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 15px;
+            color: #fff;
+            background: #2a3145;
+            box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.3);
+        }
+        .ball.gold {
+            background: #d4a11e;
+        }
+        .ball.blue {
+            background: #1e6fc4;
+        }
+        .ball.red {
+            background: #c43e1e;
+        }
+        .ball.gray {
+            background: #6b7280;
+        }
+        .ball.green {
+            background: #1ea86b;
+        }
+        .no-data {
+            text-align: center;
+            color: #5a6680;
+            padding: 40px 0;
+            font-size: 15px;
+        }
+        .footer {
+            margin-top: 28px;
+            text-align: center;
+            color: #4a5570;
+            font-size: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
+            padding-top: 20px;
+        }
+        .loading {
+            text-align: center;
+            color: #8b95b0;
+            padding: 20px;
+        }
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px 16px;
+            }
+            .input-group {
+                flex-wrap: wrap;
+                background: transparent;
+                border: none;
+                padding: 0;
+            }
+            .input-group input {
+                background: rgba(255, 255, 255, 0.04);
+                border-radius: 40px;
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                flex: 1 1 100%;
+            }
+            .input-group button {
+                flex: 1 1 100%;
+                justify-content: center;
+                margin-top: 6px;
+            }
+            .ball {
+                width: 34px;
+                height: 34px;
+                font-size: 13px;
+            }
+            .result-item {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🎲 AI 로또 예측기</h1>
+        <p class="sub">위치 통계 + 행운의 시드 기반</p>
+
+        <div class="input-group">
+            <input type="text" id="seedInput" placeholder="행운의 숫자 (최대 10자리)" maxlength="10" />
+            <button id="predictBtn">✨ 예측하기</button>
+        </div>
+
+        <div class="info-box">
+            <strong>📊 1~1229회차</strong> 위치별 빈도를 분석하고,<br />
+            입력한 행운의 숫자를 시드로 반영하여 <strong>5가지</strong> 조합을 추천합니다.
+        </div>
+
+        <div class="result-area" id="resultArea">
+            <div class="loading">📂 데이터를 불러오는 중...</div>
+        </div>
+
+        <div class="footer">
+            통계 기반 참고용 · 당첨을 보장하지 않습니다 🍀
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // 1. 데이터 로드 (lotto_data.json)
+        // ============================================================
+        let draws = [];
+
+        async function loadData() {
+            try {
+                const response = await fetch('lotto_data.json');
+                if (!response.ok) throw new Error('JSON 파일을 불러올 수 없습니다.');
+                const rawData = await response.json();
+                // rawData: [[회차, 번호1...6, 보너스], ...]
+                draws = rawData.map(row => ({
+                    회차: row[0],
+                    번호: row.slice(1, 7).sort((a, b) => a - b),
+                    보너스: row[7]
+                }));
+                document.getElementById('resultArea').innerHTML = `<div class="no-data">👆 예측 버튼을 눌러주세요</div>`;
+                // 초기 예측 실행 (시드 0)
+                document.getElementById('predictBtn').click();
+            } catch (e) {
+                document.getElementById('resultArea').innerHTML =
+                    `<div class="no-data">⚠️ 데이터 로드 실패: ${e.message}<br>lotto_data.json 파일을 확인해주세요.</div>`;
+                console.error(e);
+            }
+        }
+
+        // ============================================================
+        // 2. 위치별 통계 및 점수 계산
+        // ============================================================
+        function computeScores(draws) {
+            const totalDraws = draws.length;
+            const totalPosFreq = Array.from({ length: 6 }, () => ({}));
+            const recentPosFreq = Array.from({ length: 6 }, () => ({}));
+            const lastSeenPos = Array.from({ length: 6 }, () => ({}));
+
+            for (let pos = 0; pos < 6; pos++) {
+                for (let n = 1; n <= 45; n++) {
+                    totalPosFreq[pos][n] = 0;
+                    recentPosFreq[pos][n] = 0;
+                    lastSeenPos[pos][n] = -1;
+                }
+            }
+
+            draws.forEach((d, idx) => {
+                d.번호.forEach((num, pos) => {
+                    totalPosFreq[pos][num] = (totalPosFreq[pos][num] || 0) + 1;
+                    lastSeenPos[pos][num] = idx;
+                    if (idx >= totalDraws - 30) {
+                        recentPosFreq[pos][num] = (recentPosFreq[pos][num] || 0) + 1;
+                    }
+                });
+            });
+
+            const currentIdx = totalDraws - 1;
+
+            function rankScore(counter, num) {
+                const freq = counter[num] || 0;
+                const freqs = Object.values(counter).sort((a, b) => b - a);
+                let rank = 1;
+                for (let i = 0; i < freqs.length; i++) {
+                    if (freq === freqs[i]) { rank = 45 - i; break; }
+                }
+                return rank;
+            }
+
+            const missingRankByPos = Array.from({ length: 6 }, () => ({}));
+            for (let pos = 0; pos < 6; pos++) {
+                const daysList = [];
+                for (let n = 1; n <= 45; n++) {
+                    daysList.push(currentIdx - lastSeenPos[pos][n]);
+                }
+                const sortedDays = [...daysList].sort((a, b) => b - a);
+                for (let n = 1; n <= 45; n++) {
+                    const days = currentIdx - lastSeenPos[pos][n];
+                    let rank = 1;
+                    for (let i = 0; i < sortedDays.length; i++) {
+                        if (days === sortedDays[i]) { rank = 45 - i; break; }
+                    }
+                    missingRankByPos[pos][n] = rank;
+                }
+            }
+
+            const scores = {};
+            for (let n = 1; n <= 45; n++) {
+                let totalRankSum = 0,
+                    recentRankSum = 0,
+                    missingRankSum = 0;
+                for (let pos = 0; pos < 6; pos++) {
+                    totalRankSum += rankScore(totalPosFreq[pos], n);
+                    recentRankSum += rankScore(recentPosFreq[pos], n);
+                    missingRankSum += missingRankByPos[pos][n];
+                }
+                scores[n] = 0.4 * (totalRankSum / 6) + 0.3 * (recentRankSum / 6) + 0.3 * (missingRankSum / 6);
+            }
+            return scores;
+        }
+
+        // ============================================================
+        // 3. 조합 생성 및 예측
+        // ============================================================
+        function getCombinations(arr, k) {
+            if (k === 0) return [
+                []
+            ];
+            if (arr.length === 0) return [];
+            const [first, ...rest] = arr;
+            const withFirst = getCombinations(rest, k - 1).map(c => [first, ...c]);
+            const withoutFirst = getCombinations(rest, k);
+            return [...withFirst, ...withoutFirst];
+        }
+
+        function generatePredictions(draws, seed) {
+            if (draws.length === 0) return [];
+            const scores = computeScores(draws);
+            const rng = new Math.seedrandom(seed.toString());
+
+            // 상위 8개 풀
+            const sortedByScore = Array.from({ length: 45 }, (_, i) => i + 1)
+                .sort((a, b) => scores[b] - scores[a]);
+            let topPool = sortedByScore.slice(0, 8);
+
+            // 시드로 섞기
+            for (let i = topPool.length - 1; i > 0; i--) {
+                const j = Math.floor(rng() * (i + 1));
+                [topPool[i], topPool[j]] = [topPool[j], topPool[i]];
+            }
+
+            const allCombos = getCombinations(topPool, 6);
+            const valid = [];
+            for (const combo of allCombos) {
+                const sum = combo.reduce((a, b) => a + b, 0);
+                const oddCnt = combo.filter(n => n % 2 === 1).length;
+                if (sum < 100 || sum > 170) continue;
+                if (oddCnt < 2 || oddCnt > 4) continue;
+                const avgScore = combo.reduce((a, b) => a + scores[b], 0) / 6;
+                valid.push({ combo, avgScore });
+            }
+
+            valid.sort((a, b) => b.avgScore - a.avgScore);
+            const top10 = valid.slice(0, 10);
+            for (let i = top10.length - 1; i > 0; i--) {
+                const j = Math.floor(rng() * (i + 1));
+                [top10[i], top10[j]] = [top10[j], top10[i]];
+            }
+            return top10.slice(0, 5).map(item => item.combo);
+        }
+
+        // ============================================================
+        // 4. UI 렌더링
+        // ============================================================
+        function getBallClass(num) {
+            if (num <= 10) return 'gold';
+            if (num <= 20) return 'blue';
+            if (num <= 30) return 'red';
+            if (num <= 40) return 'gray';
+            return 'green';
+        }
+
+        function renderResults(combos) {
+            const area = document.getElementById('resultArea');
+            if (!combos || combos.length === 0) {
+                area.innerHTML = `<div class="no-data">😅 조건에 맞는 조합이 없습니다. 다른 시도를 해보세요.</div>`;
+                return;
+            }
+            const labels = ['A', 'B', 'C', 'D', 'E'];
+            let html = '';
+            combos.forEach((combo, idx) => {
+                const sorted = [...combo].sort((a, b) => a - b);
+                html += `<div class="result-item">
+                        <span class="result-label">${labels[idx]}</span>
+                        <div class="result-numbers">`;
+                sorted.forEach(num => {
+                    html += `<span class="ball ${getBallClass(num)}">${num}</span>`;
+                });
+                html += `</div></div>`;
+            });
+            area.innerHTML = html;
+        }
+
+        // ============================================================
+        // 5. 이벤트 바인딩
+        // ============================================================
+        document.getElementById('predictBtn').addEventListener('click', function() {
+            const input = document.getElementById('seedInput');
+            let seed = input.value.trim();
+            if (seed === '') {
+                seed = '0';
+            } else if (!/^\d{1,10}$/.test(seed)) {
+                alert('⚠️ 10자리 이하의 숫자만 입력해주세요.');
+                return;
+            }
+            const combos = generatePredictions(draws, seed);
+            renderResults(combos);
+        });
+
+        document.getElementById('seedInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('predictBtn').click();
+            }
+        });
+
+        // ============================================================
+        // 6. 시작
+        // ============================================================
+        loadData();
+    </script>
+
+</body>
+</html>
