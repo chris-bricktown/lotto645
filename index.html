@@ -131,6 +131,7 @@
         .latest-balls {
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
             flex-wrap: wrap;
         }
@@ -138,17 +139,6 @@
             color: #8b95b0;
             font-weight: 700;
             font-size: 18px;
-        }
-        .latest-bonus-wrap {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 3px;
-        }
-        .latest-bonus-label {
-            color: #8b95b0;
-            font-size: 10px;
-            font-weight: 300;
         }
         .result-area {
             margin-top: 8px;
@@ -177,6 +167,8 @@
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
+            flex: 1;
+            justify-content: center;
         }
         .ball {
             display: inline-flex;
@@ -259,7 +251,7 @@
                 gap: 5px;
                 flex-wrap: nowrap;
                 flex: 1;
-                justify-content: space-between;
+                justify-content: center;
             }
             .ball {
                 width: 30px;
@@ -268,7 +260,7 @@
             }
             .latest-balls {
                 gap: 5px;
-                justify-content: space-between;
+                justify-content: center;
             }
             .latest-plus {
                 font-size: 14px;
@@ -490,10 +482,7 @@
                 <div class="latest-balls">
                     ${balls}
                     <span class="latest-plus">+</span>
-                    <span class="latest-bonus-wrap">
-                        <span class="ball ${getBallClass(d.보너스)}">${d.보너스}</span>
-                        <span class="latest-bonus-label">보너스</span>
-                    </span>
+                    <span class="ball ${getBallClass(d.보너스)}">${d.보너스}</span>
                 </div>`;
         }
 
