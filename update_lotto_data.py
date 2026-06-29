@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
-"""동행복권(dhlottery) 공식 API에서 최신 로또 6/45 당첨번호를 읽어와
-lotto_data.json 을 갱신한다.
+"""로또 6/45 당첨번호를 읽어와 lotto_data.json 을 갱신한다.
 
 데이터 형식: [[회차, 번호1, 번호2, 번호3, 번호4, 번호5, 번호6, 보너스], ...]
 
-공식 API:
-  https://www.dhlottery.co.kr/common.do?method=getLottoNumber&drwNo={회차}
+데이터 출처: smok95/lotto (GitHub Pages 정적 JSON, CDN 제공)
+  https://smok95.github.io/lotto/results/{회차}.json
+
+dhlottery 공식 API 는 해외/클라우드 IP 를 차단(타임아웃)해 GitHub Actions
+러너에서 동작하지 않으므로, 전 세계 어디서든 접근 가능한 위 GitHub Pages
+정적 JSON 을 사용한다.
 
 응답(JSON) 예시:
-  {"returnValue":"success","drwNoDate":"2026-06-27","drwNo":1230,
-   "drwtNo1":3,"drwtNo2":8,"drwtNo3":9,"drwtNo4":22,"drwtNo5":28,
-   "drwtNo6":42,"bnusNo":45, ...}
+  {"draw_no":1230,"numbers":[3,8,9,22,28,42],"bonus_no":45,
+   "date":"2026-06-27T00:00:00Z", ...}
 
-아직 추첨하지 않은 회차는 {"returnValue":"fail"} 를 반환하므로,
-파일에 있는 마지막 회차 다음부터 fail 이 나올 때까지 이어서 가져온다.
+아직 추첨하지 않은 회차는 404(Not Found)를 반환하므로,
+파일에 있는 마지막 회차 다음부터 404 가 나올 때까지 이어서 가져온다.
 """
 
 import json
@@ -23,19 +25,15 @@ import urllib.request
 import urllib.error
 from pathlib import Path
 
-API_URL = "https://www.dhlottery.co.kr/common.do?method=getLottoNumber&drwNo={no}"
+API_URL = "https://smok95.github.io/lotto/results/{no}.json"
 DATA_FILE = Path(__file__).resolve().parent / "lotto_data.json"
 
-# 일부 환경(클라우드/해외 IP)에서는 dhlottery 가 봇 요청을 차단하므로
-# 일반 브라우저처럼 보이는 헤더를 사용한다.
 HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
         "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     ),
-    "Accept": "application/json, text/javascript, */*; q=0.01",
-    "Accept-Language": "ko-KR,ko;q=0.9",
-    "Referer": "https://www.dhlottery.co.kr/gameResult.do?method=byWin",
+    "Accept": "application/json, */*; q=0.01",
 }
 
 # 안전장치: 한 번 실행에서 가져올 최대 회차 수
@@ -43,7 +41,7 @@ MAX_FETCH = 20
 
 
 def fetch_draw(no, retries=3):
-    """회차 번호로 공식 API 를 호출해 dict 를 반환. 미추첨이면 None."""
+    """회차 번호로 결과 JSON 을 가져와 dict 로 반환. 미추첨(404)이면 None."""
     url = API_URL.format(no=no)
     last_err = None
     for attempt in range(retries):
@@ -51,10 +49,13 @@ def fetch_draw(no, retries=3):
             req = urllib.request.Request(url, headers=HEADERS)
             with urllib.request.urlopen(req, timeout=15) as resp:
                 raw = resp.read().decode("utf-8")
-            data = json.loads(raw)
-            if data.get("returnValue") != "success":
+            return json.loads(raw)
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                # 아직 추첨하지 않은 회차 → 더 가져올 데이터 없음
                 return None
-            return data
+            last_err = e
+            time.sleep(2 * (attempt + 1))
         except (urllib.error.URLError, json.JSONDecodeError, TimeoutError) as e:
             last_err = e
             time.sleep(2 * (attempt + 1))
@@ -62,13 +63,11 @@ def fetch_draw(no, retries=3):
 
 
 def draw_to_row(data):
-    """API 응답 dict 를 [회차, n1..n6, 보너스] 리스트로 변환."""
-    return [
-        data["drwNo"],
-        data["drwtNo1"], data["drwtNo2"], data["drwtNo3"],
-        data["drwtNo4"], data["drwtNo5"], data["drwtNo6"],
-        data["bnusNo"],
-    ]
+    """결과 JSON dict 를 [회차, n1..n6, 보너스] 리스트로 변환."""
+    numbers = sorted(data["numbers"])
+    if len(numbers) != 6:
+        raise ValueError(f"{data.get('draw_no')}회 번호 개수 이상: {numbers}")
+    return [data["draw_no"], *numbers, data["bonus_no"]]
 
 
 def load_data():
@@ -111,15 +110,15 @@ def main():
         if data is None:
             print(f"{no}회는 아직 추첨 전입니다. 종료.")
             break
-        # 공식 API 응답의 drwNo 가 요청한 회차와 일치하는지 확인한다.
-        if data.get("drwNo") != no:
+        # 응답의 draw_no 가 요청한 회차와 일치하는지 확인한다.
+        if data.get("draw_no") != no:
             raise ValueError(
-                f"API 응답 회차 불일치: {no}회를 요청했으나 {data.get('drwNo')}회 응답."
+                f"응답 회차 불일치: {no}회를 요청했으나 {data.get('draw_no')}회 응답."
             )
         row = draw_to_row(data)
         rows.append(row)
         added.append(row)
-        date = data.get("drwNoDate", "?")
+        date = (data.get("date") or "?")[:10]
         print(f"추가: {no}회 ({date}) -> {row[1:7]} + 보너스 {row[7]}")
         time.sleep(0.5)
 
