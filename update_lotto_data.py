@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """로또 6/45 당첨번호를 읽어와 lotto_data.json 을 갱신한다.
 
-데이터 형식: [[회차, 번호1, 번호2, 번호3, 번호4, 번호5, 번호6, 보너스], ...]
+데이터 형식: [[회차, 번호1, 번호2, 번호3, 번호4, 번호5, 번호6, 보너스, "날짜"], ...]
+  날짜는 추첨일 "YYYY-MM-DD".
 
 데이터 출처: smok95/lotto (GitHub Pages 정적 JSON, CDN 제공)
   https://smok95.github.io/lotto/results/{회차}.json
@@ -63,11 +64,12 @@ def fetch_draw(no, retries=3):
 
 
 def draw_to_row(data):
-    """결과 JSON dict 를 [회차, n1..n6, 보너스] 리스트로 변환."""
+    """결과 JSON dict 를 [회차, n1..n6, 보너스, "날짜"] 리스트로 변환."""
     numbers = sorted(data["numbers"])
     if len(numbers) != 6:
         raise ValueError(f"{data.get('draw_no')}회 번호 개수 이상: {numbers}")
-    return [data["draw_no"], *numbers, data["bonus_no"]]
+    date = (data.get("date") or "")[:10]   # "YYYY-MM-DD"
+    return [data["draw_no"], *numbers, data["bonus_no"], date]
 
 
 def load_data():
@@ -76,8 +78,11 @@ def load_data():
 
 
 def dump_data(rows):
-    """index.html 이 기대하는, 한 줄에 한 회차씩인 읽기 쉬운 형식으로 저장."""
-    lines = ["[" + ", ".join(str(v) for v in row) + "]" for row in rows]
+    """index.html 이 기대하는, 한 줄에 한 회차씩인 읽기 쉬운 형식으로 저장.
+
+    날짜 문자열이 포함되므로 각 행을 json.dumps 로 직렬화한다.
+    """
+    lines = [json.dumps(row, ensure_ascii=False) for row in rows]
     DATA_FILE.write_text("[" + ", \n".join(lines) + "]\n", encoding="utf-8")
 
 
