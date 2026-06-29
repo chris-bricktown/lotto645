@@ -258,8 +258,9 @@
                     번호: row.slice(1, 7).sort((a, b) => a - b),
                     보너스: row[7]
                 }));
-                document.getElementById('resultArea').innerHTML = `<div class="no-data">👆 예측 버튼을 눌러주세요</div>`;
-                // 초기 예측 실행 (시드 0)
+                // 접속 시 랜덤 행운의 숫자로 초기 예측 실행
+                const randomSeed = Math.floor(Math.random() * 10000000000).toString();
+                document.getElementById('seedInput').value = randomSeed;
                 document.getElementById('predictBtn').click();
             } catch (e) {
                 document.getElementById('resultArea').innerHTML =
@@ -428,7 +429,9 @@
             const input = document.getElementById('seedInput');
             let seed = input.value.trim();
             if (seed === '') {
-                seed = '0';
+                alert('⚠️ 행운의 숫자를 입력해주세요.');
+                input.focus();
+                return;
             } else if (!/^\d{1,10}$/.test(seed)) {
                 alert('⚠️ 10자리 이하의 숫자만 입력해주세요.');
                 return;
