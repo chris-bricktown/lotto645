@@ -4,10 +4,11 @@ name: Update Lotto Data
 # 최신 회차를 가져와 lotto_data.json 을 갱신한다.
 on:
   schedule:
-    # 추첨은 매주 토 20:45 KST. 토 13:00 UTC (= 토 22:00 KST) — 추첨 직후
-    - cron: '0 13 * * 6'
-    # 일 02:00 UTC (= 일 11:00 KST) — 백업 (1차 실패/지연 대비)
-    - cron: '0 2 * * 0'
+    # 추첨은 매주 토 20:45 KST. 일요일 0시·3시·6시(KST)에 3번 시도.
+    # KST = UTC+9 이므로 UTC 기준으로는 토요일 15시·18시·21시.
+    - cron: '0 15 * * 6'   # 일 00:00 KST
+    - cron: '0 18 * * 6'   # 일 03:00 KST
+    - cron: '0 21 * * 6'   # 일 06:00 KST
   workflow_dispatch:
 
 permissions:
