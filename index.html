@@ -100,6 +100,56 @@
         .info-box strong {
             color: #fff;
         }
+        .latest-box {
+            background: linear-gradient(145deg, rgba(247, 183, 49, 0.12), rgba(255, 255, 255, 0.03));
+            border: 1px solid rgba(247, 183, 49, 0.25);
+            border-radius: 18px;
+            padding: 16px 18px 14px;
+            margin-bottom: 24px;
+        }
+        .latest-box:empty {
+            display: none;
+        }
+        .latest-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 14px;
+            gap: 8px;
+        }
+        .latest-title {
+            color: #fff;
+            font-weight: 700;
+            font-size: 16px;
+        }
+        .latest-date {
+            color: #8b95b0;
+            font-size: 13px;
+            font-weight: 300;
+            white-space: nowrap;
+        }
+        .latest-balls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .latest-plus {
+            color: #8b95b0;
+            font-weight: 700;
+            font-size: 18px;
+        }
+        .latest-bonus-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+        }
+        .latest-bonus-label {
+            color: #8b95b0;
+            font-size: 10px;
+            font-weight: 300;
+        }
         .result-area {
             margin-top: 8px;
         }
@@ -216,6 +266,13 @@
                 height: 30px;
                 font-size: 12px;
             }
+            .latest-balls {
+                gap: 5px;
+                justify-content: space-between;
+            }
+            .latest-plus {
+                font-size: 14px;
+            }
         }
     </style>
 </head>
@@ -228,6 +285,8 @@
             <input type="text" id="seedInput" placeholder="행운의 숫자 (최대 13자리)" maxlength="13" />
             <button id="predictBtn">✨ 예측하기</button>
         </div>
+
+        <div class="latest-box" id="latestDraw"></div>
 
         <div class="info-box">
             📊 입력한 행운의 숫자를 시드로 반영하여 <strong>5가지</strong> 조합을 추천합니다.
@@ -253,11 +312,12 @@
                 const response = await fetch('lotto_data.json');
                 if (!response.ok) throw new Error('JSON 파일을 불러올 수 없습니다.');
                 const rawData = await response.json();
-                // rawData: [[회차, 번호1...6, 보너스], ...]
+                // rawData: [[회차, 번호1...6, 보너스, "날짜"], ...]
                 draws = rawData.map(row => ({
                     회차: row[0],
                     번호: row.slice(1, 7).sort((a, b) => a - b),
-                    보너스: row[7]
+                    보너스: row[7],
+                    날짜: row[8]
                 }));
                 // 회차 정보 기준으로 오름차순 정렬 (통계의 '최근 N회'가 항상 정확하도록)
                 draws.sort((a, b) => a.회차 - b.회차);
@@ -269,7 +329,9 @@
                 });
                 const latest = draws[draws.length - 1];
                 console.info(`로또 데이터 로드: 총 ${draws.length}회차, 최신 ${latest.회차}회 ` +
-                    `[${latest.번호.join(', ')}] + 보너스 ${latest.보너스}`);
+                    `(${latest.날짜}) [${latest.번호.join(', ')}] + 보너스 ${latest.보너스}`);
+                // 가장 마지막 회차의 실제 당첨번호를 화면에 표시
+                renderLatestDraw(latest);
                 // 접속 시 랜덤 행운의 숫자로 초기 예측 실행
                 const randomSeed = Math.floor(Math.random() * 10000000000).toString();
                 document.getElementById('seedInput').value = randomSeed;
@@ -411,6 +473,28 @@
             if (num <= 30) return 'red';
             if (num <= 40) return 'gray';
             return 'green';
+        }
+
+        // 가장 마지막 회차의 회차번호 · 날짜 · 당첨번호 · 보너스 표시
+        function renderLatestDraw(d) {
+            const el = document.getElementById('latestDraw');
+            if (!el || !d) return;
+            const balls = d.번호
+                .map(n => `<span class="ball ${getBallClass(n)}">${n}</span>`)
+                .join('');
+            el.innerHTML = `
+                <div class="latest-head">
+                    <span class="latest-title">🏆 ${d.회차}회 당첨번호</span>
+                    <span class="latest-date">${d.날짜} 추첨</span>
+                </div>
+                <div class="latest-balls">
+                    ${balls}
+                    <span class="latest-plus">+</span>
+                    <span class="latest-bonus-wrap">
+                        <span class="ball ${getBallClass(d.보너스)}">${d.보너스}</span>
+                        <span class="latest-bonus-label">보너스</span>
+                    </span>
+                </div>`;
         }
 
         function renderResults(combos) {
