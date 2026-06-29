@@ -225,7 +225,7 @@
         <h1>🎲 AI 로또 예측기</h1>
 
         <div class="input-group">
-            <input type="text" id="seedInput" placeholder="행운의 숫자 (최대 10자리)" maxlength="10" />
+            <input type="text" id="seedInput" placeholder="행운의 숫자 (최대 13자리)" maxlength="13" />
             <button id="predictBtn">✨ 예측하기</button>
         </div>
 
@@ -433,8 +433,8 @@
                 alert('⚠️ 행운의 숫자를 입력해주세요.');
                 input.focus();
                 return;
-            } else if (!/^\d{1,10}$/.test(seed)) {
-                alert('⚠️ 10자리 이하의 숫자만 입력해주세요.');
+            } else if (!/^\d{1,13}$/.test(seed)) {
+                alert('⚠️ 13자리 이하의 숫자만 입력해주세요.');
                 return;
             }
             const combos = generatePredictions(draws, seed);
