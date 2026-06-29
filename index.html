@@ -259,6 +259,17 @@
                     번호: row.slice(1, 7).sort((a, b) => a - b),
                     보너스: row[7]
                 }));
+                // 회차 정보 기준으로 오름차순 정렬 (통계의 '최근 N회'가 항상 정확하도록)
+                draws.sort((a, b) => a.회차 - b.회차);
+                // 1회차부터 빠짐없이 연속이어야 함 — 누락/중복 시 콘솔 경고
+                draws.forEach((d, idx) => {
+                    if (d.회차 !== idx + 1) {
+                        console.warn(`회차 불일치: 위치 ${idx}에 ${d.회차}회 (기대값 ${idx + 1}회)`);
+                    }
+                });
+                const latest = draws[draws.length - 1];
+                console.info(`로또 데이터 로드: 총 ${draws.length}회차, 최신 ${latest.회차}회 ` +
+                    `[${latest.번호.join(', ')}] + 보너스 ${latest.보너스}`);
                 // 접속 시 랜덤 행운의 숫자로 초기 예측 실행
                 const randomSeed = Math.floor(Math.random() * 10000000000).toString();
                 document.getElementById('seedInput').value = randomSeed;

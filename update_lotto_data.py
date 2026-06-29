@@ -82,11 +82,28 @@ def dump_data(rows):
     DATA_FILE.write_text("[" + ", \n".join(lines) + "]\n", encoding="utf-8")
 
 
+def validate_contiguous(rows):
+    """회차가 1회부터 빠짐없이 연속이고, 배열 위치(index+1)와 일치하는지 검증.
+
+    index.html 이 '첫 번째 = 1회차'를 전제로 하므로, 이 규칙이 깨지면
+    데이터가 잘못된 것이라 예외를 던져 워크플로를 실패시킨다.
+    (예: 1230회가 1229로 잘못 기록되는 사고 방지)
+    """
+    for i, row in enumerate(rows):
+        expected = i + 1
+        if row[0] != expected:
+            raise ValueError(
+                f"회차 불일치: 위치 {i}(={expected}회 이어야 함)에 {row[0]}회가 있음. "
+                f"데이터가 연속적이지 않습니다."
+            )
+
+
 def main():
     rows = load_data()
-    by_no = {row[0]: row for row in rows}
-    last_no = max(by_no)
-    print(f"현재 마지막 회차: {last_no}회")
+    # 시작 전, 기존 데이터가 1회부터 연속인지 먼저 확인한다.
+    validate_contiguous(rows)
+    last_no = rows[-1][0]
+    print(f"현재 마지막 회차: {last_no}회 (총 {len(rows)}회차)")
 
     added = []
     for no in range(last_no + 1, last_no + 1 + MAX_FETCH):
@@ -94,8 +111,13 @@ def main():
         if data is None:
             print(f"{no}회는 아직 추첨 전입니다. 종료.")
             break
+        # 공식 API 응답의 drwNo 가 요청한 회차와 일치하는지 확인한다.
+        if data.get("drwNo") != no:
+            raise ValueError(
+                f"API 응답 회차 불일치: {no}회를 요청했으나 {data.get('drwNo')}회 응답."
+            )
         row = draw_to_row(data)
-        by_no[row[0]] = row
+        rows.append(row)
         added.append(row)
         date = data.get("drwNoDate", "?")
         print(f"추가: {no}회 ({date}) -> {row[1:7]} + 보너스 {row[7]}")
@@ -105,7 +127,8 @@ def main():
         print("새로 추가할 회차가 없습니다.")
         return 0
 
-    rows = [by_no[n] for n in sorted(by_no)]
+    # 저장 전, 최종 데이터도 다시 연속성 검증 (불일치 시 저장하지 않고 실패).
+    validate_contiguous(rows)
     dump_data(rows)
     print(f"완료: {len(added)}개 회차 추가, 총 {len(rows)}회차.")
     return 0

@@ -4,7 +4,7 @@ name: Update Lotto Data
 # 최신 회차를 가져와 lotto_data.json 을 갱신한다.
 on:
   schedule:
-    # 토 13:00 UTC (= 일 22:00 KST) — 추첨 직후
+    # 추첨은 매주 토 20:45 KST. 토 13:00 UTC (= 토 22:00 KST) — 추첨 직후
     - cron: '0 13 * * 6'
     # 일 02:00 UTC (= 일 11:00 KST) — 백업 (1차 실패/지연 대비)
     - cron: '0 2 * * 0'
