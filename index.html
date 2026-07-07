@@ -324,9 +324,9 @@
                     `(${latest.날짜}) [${latest.번호.join(', ')}] + 보너스 ${latest.보너스}`);
                 // 가장 마지막 회차의 실제 당첨번호를 화면에 표시
                 renderLatestDraw(latest);
-                // 접속 시 랜덤 행운의 숫자로 초기 예측 실행
-                const randomSeed = Math.floor(Math.random() * 10000000000).toString();
-                document.getElementById('seedInput').value = randomSeed;
+                // 저장된 사용자 행운의 숫자가 있으면 그 값을, 없으면 랜덤값을 사용해 초기 예측
+                const seed = loadLuckyNumber() || Math.floor(Math.random() * 10000000000).toString();
+                document.getElementById('seedInput').value = seed;
                 document.getElementById('predictBtn').click();
             } catch (e) {
                 document.getElementById('resultArea').innerHTML =
@@ -531,8 +531,40 @@
             }
         });
 
+        // 사용자가 '직접 입력'한 값만 저장한다.
+        // (프로그램적인 .value 설정은 input 이벤트를 발생시키지 않으므로
+        //  접속 시 표시되는 랜덤 값은 저장되지 않는다.)
+        document.getElementById('seedInput').addEventListener('input', function() {
+            const v = this.value.trim();
+            if (/^\d{1,13}$/.test(v)) {
+                saveLuckyNumber(v);
+            }
+        });
+
         // ============================================================
-        // 6. 시작
+        // 6. 행운의 숫자 저장/불러오기 (localStorage)
+        // ============================================================
+        const LUCKY_KEY = 'luckyNumber';
+
+        function loadLuckyNumber() {
+            try {
+                const v = localStorage.getItem(LUCKY_KEY);
+                return (v && /^\d{1,13}$/.test(v)) ? v : null;
+            } catch (e) {
+                return null; // localStorage 미지원/차단 시 랜덤값으로 대체
+            }
+        }
+
+        function saveLuckyNumber(v) {
+            try {
+                localStorage.setItem(LUCKY_KEY, v);
+            } catch (e) {
+                /* 저장 불가 환경은 무시 */
+            }
+        }
+
+        // ============================================================
+        // 7. 시작
         // ============================================================
         loadData();
     </script>
