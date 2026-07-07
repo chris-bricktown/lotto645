@@ -514,9 +514,10 @@
             const input = document.getElementById('seedInput');
             let seed = input.value.trim();
             if (seed === '') {
-                alert('⚠️ 행운의 숫자를 입력해주세요.');
-                input.focus();
-                return;
+                // 비운 채로 예측하면: 랜덤 번호를 부여하고 저장된 행운의 번호는 삭제
+                seed = Math.floor(Math.random() * 10000000000).toString();
+                input.value = seed;
+                clearLuckyNumber();
             } else if (!/^\d{1,13}$/.test(seed)) {
                 alert('⚠️ 13자리 이하의 숫자만 입력해주세요.');
                 return;
@@ -560,6 +561,14 @@
                 localStorage.setItem(LUCKY_KEY, v);
             } catch (e) {
                 /* 저장 불가 환경은 무시 */
+            }
+        }
+
+        function clearLuckyNumber() {
+            try {
+                localStorage.removeItem(LUCKY_KEY);
+            } catch (e) {
+                /* 무시 */
             }
         }
 
