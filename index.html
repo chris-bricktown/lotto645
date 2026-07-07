@@ -87,17 +87,23 @@
             background: #ffd166;
             transform: scale(1.02);
         }
-        .info-box {
-            background: rgba(255, 255, 255, 0.04);
-            border-radius: 16px;
-            padding: 14px 18px;
-            margin-bottom: 24px;
-            border-left: 4px solid #f7b731;
-            color: #bcc7e0;
-            font-size: 14px;
-            line-height: 1.6;
+        .reset-btn {
+            display: block;
+            width: 100%;
+            margin: -12px 0 24px;
+            padding: 10px;
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 40px;
+            color: #8b95b0;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
         }
-        .info-box strong {
+        .reset-btn:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.2);
             color: #fff;
         }
         .latest-box {
@@ -207,10 +213,14 @@
         .footer {
             margin-top: 28px;
             text-align: center;
-            color: #4a5570;
+            color: #6b7793;
             font-size: 12px;
+            line-height: 1.7;
             border-top: 1px solid rgba(255, 255, 255, 0.04);
             padding-top: 20px;
+        }
+        .footer strong {
+            color: #cdd5e6;
         }
         .loading {
             text-align: center;
@@ -278,17 +288,16 @@
             <button id="predictBtn">✨ 예측하기</button>
         </div>
 
-        <div class="latest-box" id="latestDraw"></div>
+        <button id="resetBtn" class="reset-btn">🔄 행운의 번호 초기화</button>
 
-        <div class="info-box">
-            📊 입력한 행운의 숫자를 시드로 반영하여 <strong>5가지</strong> 조합을 추천합니다.
-        </div>
+        <div class="latest-box" id="latestDraw"></div>
 
         <div class="result-area" id="resultArea">
             <div class="loading">📂 데이터를 불러오는 중...</div>
         </div>
 
         <div class="footer">
+            📊 입력한 행운의 숫자를 시드로 반영하여 <strong>5가지</strong> 조합을 추천합니다.<br>
             통계 기반 참고용 · 당첨을 보장하지 않습니다 🍀
         </div>
     </div>
@@ -530,6 +539,14 @@
             if (e.key === 'Enter') {
                 document.getElementById('predictBtn').click();
             }
+        });
+
+        // 행운의 번호 초기화: 저장값 삭제 + 새 랜덤 번호 부여 후 예측
+        document.getElementById('resetBtn').addEventListener('click', function() {
+            clearLuckyNumber();
+            const seed = Math.floor(Math.random() * 10000000000).toString();
+            document.getElementById('seedInput').value = seed;
+            renderResults(generatePredictions(draws, seed));
         });
 
         // 사용자가 '직접 입력'한 값만 저장한다.
