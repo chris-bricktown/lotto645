@@ -3,6 +3,11 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  # 자동 갱신 워크플로가 GITHUB_TOKEN 으로 커밋하면 그 push 가 다른
+  # 워크플로를 트리거하지 못하므로(무한루프 방지 정책), 갱신 완료 후에도 배포한다.
+  workflow_run:
+    workflows: ["Update Lotto Data"]
+    types: [completed]
   workflow_dispatch:
 
 permissions:
@@ -16,6 +21,8 @@ concurrency:
 
 jobs:
   deploy:
+    # workflow_run 로 트리거된 경우엔 갱신이 성공했을 때만 배포한다.
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
